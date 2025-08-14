@@ -6,7 +6,7 @@ This action automates the process of generating and publishing Spryker Glue API 
 
 ```yaml
 - name: Generate and Publish Specs
-  uses: your-org/api-spec-action@v1
+  uses: spryker-sdk/gha-api-spec-upload@master
   with:
     app-type: 'b2b'
     s3-bucket: 'my-project-docs'
