@@ -40,9 +40,10 @@ echo "Adding a customizable server entry..."
 # Note: yq version 4 is required for this script.
 # Extract the URL from the first server entry.
 FIRST_SERVER_URL=$(yq eval '.servers[0].url' "${TEMP_JSON_FILE}")
+export FIRST_SERVER_URL
 
 # Add a new server entry with the extracted URL as the default for the variable.
-yq eval --inplace '.servers += [{"url": "{Add your own server URL here}", "description": "Replace with your own environment.", "variables": {"Add your own server URL here": {"default": "'"$FIRST_SERVER_URL"'"}}}]' "${TEMP_JSON_FILE}"
+yq eval --inplace '.servers += [{"url": "{Add your own server URL here}", "description": "Replace with your own environment.", "variables": {"Add your own server URL here": {"default": env(FIRST_SERVER_URL)}}}]' "${TEMP_JSON_FILE}"
 echo "Customizable server entry added."
 
 LOCAL_MD5=$(md5sum "${TEMP_JSON_FILE}" | awk '{ print $1 }')
