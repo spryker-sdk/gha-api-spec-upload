@@ -1,0 +1,108 @@
+name: 'Generate and Publish Spryker API Specs'
+description: 'Starts a Spryker Docker environment, generates API schemas, and uploads them to S3 if changed.'
+author: 'René Klatt'
+
+# 1. DEFINE INPUTS
+# These are the configuration options for your action.
+inputs:
+  app-type:
+    description: 'The application type, used for naming the output file (e.g., "b2b", "b2b_marketplace", "b2c", "b2c_marketplace").'
+    required: true
+  deploy-file:
+    description: 'Path to the docker-sdk deploy file in the calling repository.'
+    required: true
+    default: 'deploy.ci.api.mariadb.yml'
+  spryker-platform-image:
+    description: 'The Spryker platform Docker image tag to use.'
+    required: false
+    default: 'spryker/php:8.3'
+  spryker-region:
+    description: 'The Spryker region (e.g., EU, US).'
+    required: false
+    default: 'EU'
+  s3-bucket:
+    description: 'The AWS S3 bucket to upload the schemas to.'
+    required: false
+    default: 'spryker'
+  s3-prefix:
+    description: 'The path prefix within the S3 bucket.'
+    required: false
+    default: 'docs/api-specs'
+  aws-region:
+    description: 'The AWS region for the S3 bucket and credentials.'
+    required: false
+    default: 'eu-central-1'
+  # OIDC is the recommended authentication method
+  aws-role-to-assume:
+    description: 'The ARN of the IAM role to assume for OIDC authentication. Recommended.'
+    required: false
+  # Static keys are supported as a fallback
+  aws-access-key-id:
+    description: 'The AWS access key ID. Use only if OIDC is not possible.'
+    required: false
+  aws-secret-access-key:
+    description: 'The AWS secret access key. Use only if OIDC is not possible.'
+    required: false
+
+# 2. DEFINE THE STEPS
+runs:
+  using: 'composite'
+  steps:
+    - name: Install Dependencies
+      shell: bash
+      run: |
+        echo "Installing yq and docker-compose..."
+        sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq && sudo chmod +x /usr/bin/yq
+        sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose && sudo chmod +x /usr/local/bin/docker-compose
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ inputs.aws-role-to-assume }}
+        aws-access-key-id: ${{ inputs.aws-access-key-id }}
+        aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
+        aws-region: ${{ inputs.aws-region }}
+
+    - name: Start Docker Environment
+      shell: bash
+      env:
+        SPRYKER_PLATFORM_IMAGE: ${{ inputs.spryker-platform-image }}
+        SPRYKER_CURRENT_REGION: ${{ inputs.spryker-region }}
+        DYNAMIC_STORE_MODE: true
+      run: |
+        git clone https://github.com/spryker/docker-sdk.git ./docker
+        docker/sdk boot ${{ inputs.deploy-file }}
+        docker/sdk up -t
+
+    - name: Generate API Schemas
+      shell: bash
+      run: |
+        echo "Generating Storefront API schema..."
+        docker/sdk cli vendor/bin/glue api:generate:documentation -a storefront
+        echo "Generating Backend API schema..."
+        docker/sdk cli vendor/bin/glue api:generate:documentation -a backend
+
+    - name: Copy Generated Schemas From Container
+      shell: bash
+      run: |
+        docker/sdk exec cli cat src/Generated/GlueStorefront/Specification/spryker_storefront_api.schema.yml > spryker_storefront_api.schema.yml
+        docker/sdk exec cli cat src/Generated/GlueBackend/Specification/spryker_backend_api.schema.yml > spryker_backend_api.schema.yml
+        echo "Generated schema files copied to runner."
+
+    - name: Process and Upload Schemas to S3
+      shell: bash
+      env:
+        # Pass action inputs to the script via environment variables
+        APP_TYPE: ${{ inputs.app-type }}
+        S3_BUCKET: ${{ inputs.s3-bucket }}
+        S3_PREFIX: ${{ inputs.s3-prefix }}
+      run: |
+        ${{ github.action_path }}/upload.sh storefront spryker_storefront_api.schema.yml
+        ${{ github.action_path }}/upload.sh backend spryker_backend_api.schema.yml
+
+    - name: Stop Docker Environment
+      if: always()
+      shell: bash
+      run: |
+        echo "Shutting down Docker environment..."
+        docker/sdk down
