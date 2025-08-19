@@ -77,15 +77,18 @@ runs:
     - name: Generate API Schemas
       shell: bash
       run: |
+#        echo "Generating Storefront API schema..."
+#        docker/sdk cli vendor/bin/glue api:generate:documentation -a storefront
         echo "Generating Storefront API schema..."
-        docker/sdk cli vendor/bin/glue api:generate:documentation -a storefront
+        docker/sdk cli vendor/bin/console rest-api:generate:documentation
         echo "Generating Backend API schema..."
         docker/sdk cli vendor/bin/glue api:generate:documentation -a backend
 
     - name: Copy Generated Schemas From Container
       shell: bash
       run: |
-        docker/sdk exec cli cat src/Generated/GlueStorefront/Specification/spryker_storefront_api.schema.yml > spryker_storefront_api.schema.yml
+#        docker/sdk exec cli cat src/Generated/GlueStorefront/Specification/spryker_storefront_api.schema.yml > spryker_storefront_api.schema.yml
+        docker/sdk exec cli cat src/Generated/Glue/Specification/spryker_rest_api.schema.yml > spryker_storefront_api.schema.yml
         docker/sdk exec cli cat src/Generated/GlueBackend/Specification/spryker_backend_api.schema.yml > spryker_backend_api.schema.yml
         echo "Generated schema files copied to runner."
 
