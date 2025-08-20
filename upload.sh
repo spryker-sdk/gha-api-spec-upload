@@ -36,6 +36,16 @@ if [ ! -s "${TEMP_JSON_FILE}" ]; then
     exit 1
 fi
 
+echo "Checking for custom server URL..."
+if [ -n "${SERVER_URL}" ]; then
+    echo "Custom server URL provided. Updating spec..."
+    # If a custom URL is provided, replace the first server's URL with it.
+    yq eval --inplace '.servers[0].url = strenv(SERVER_URL)' "${TEMP_JSON_FILE}"
+    echo "Spec updated with custom server URL: ${SERVER_URL}"
+else
+    echo "No custom server URL provided. Using default from spec."
+fi
+
 echo "Adding a customizable server entry..."
 # Note: yq version 4 is required for this script.
 # Extract the URL from the first server entry.

@@ -24,6 +24,8 @@ This action automates the process of generating and publishing Spryker Glue API 
 | `spryker-region`          | The Spryker region (e.g., EU, US).                                        | `false`  | `EU`                              |
 | `s3-bucket`               | The AWS S3 bucket for uploading schemas.                                  |  `true`  |                                   |
 | `s3-prefix`               | The path prefix within the S3 bucket.                                     | `false`  | `docs/api-specs`                  |
+| `storefront-server-url`   | A custom server URL for the Storefront API to override the one from the generated spec. Defaults to the `API_UPLOAD_GLUE_STOREFRONT_SERVER_URL` repository variable. | `false`  | `vars.API_UPLOAD_GLUE_STOREFRONT_SERVER_URL` |
+| `backend-server-url`      | A custom server URL for the Backend API to override the one from the generated spec. Defaults to the `API_UPLOAD_GLUE_BACKEND_SERVER_URL` repository variable. | `false`  | `vars.API_UPLOAD_GLUE_BACKEND_SERVER_URL` |
 | `aws-region`              | The AWS region for the S3 bucket.                                         |  `true`  |                                   |
 | `aws-role-to-assume`      | The IAM Role ARN for OIDC authentication. **(Recommended)** | `false`  |                                   |
 | `aws-access-key-id`       | AWS access key ID. (Use only if OIDC is unavailable).                     | `false`  |                                   |
