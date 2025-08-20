@@ -46,11 +46,9 @@ inputs:
   storefront-server-url:
     description: 'A custom server URL for the Storefront API to override the one from the generated spec. Defaults to the `API_UPLOAD_GLUE_STOREFRONT_SERVER_URL` repository variable.'
     required: false
-    default: ${{ vars.API_UPLOAD_GLUE_STOREFRONT_SERVER_URL }}
   backend-server-url:
     description: 'A custom server URL for the Backend API to override the one from the generated spec. Defaults to the `API_UPLOAD_GLUE_BACKEND_SERVER_URL` repository variable.'
     required: false
-    default: ${{ vars.API_UPLOAD_GLUE_BACKEND_SERVER_URL }}
 
 # 2. DEFINE THE STEPS
 runs:
