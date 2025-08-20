@@ -43,6 +43,14 @@ inputs:
   aws-secret-access-key:
     description: 'The AWS secret access key. Use only if OIDC is not possible.'
     required: false
+  storefront-server-url:
+    description: 'A custom server URL for the Storefront API to override the one from the generated spec. Defaults to the `API_UPLOAD_GLUE_STOREFRONT_SERVER_URL` repository variable.'
+    required: false
+    default: ${{ vars.API_UPLOAD_GLUE_STOREFRONT_SERVER_URL }}
+  backend-server-url:
+    description: 'A custom server URL for the Backend API to override the one from the generated spec. Defaults to the `API_UPLOAD_GLUE_BACKEND_SERVER_URL` repository variable.'
+    required: false
+    default: ${{ vars.API_UPLOAD_GLUE_BACKEND_SERVER_URL }}
 
 # 2. DEFINE THE STEPS
 runs:
@@ -99,9 +107,11 @@ runs:
         APP_TYPE: ${{ inputs.app-type }}
         S3_BUCKET: ${{ inputs.s3-bucket }}
         S3_PREFIX: ${{ inputs.s3-prefix }}
+        STOREFRONT_SERVER_URL: ${{ inputs.storefront-server-url }}
+        BACKEND_SERVER_URL: ${{ inputs.backend-server-url }}
       run: |
-        ${{ github.action_path }}/upload.sh storefront spryker_storefront_api.schema.yml
-        ${{ github.action_path }}/upload.sh backend spryker_backend_api.schema.yml
+        SERVER_URL=$STOREFRONT_SERVER_URL ${{ github.action_path }}/upload.sh storefront spryker_storefront_api.schema.yml
+        SERVER_URL=$BACKEND_SERVER_URL ${{ github.action_path }}/upload.sh backend spryker_backend_api.schema.yml
 
     - name: Stop Docker Environment
       if: always()
